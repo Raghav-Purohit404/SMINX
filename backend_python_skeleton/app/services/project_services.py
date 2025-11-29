@@ -1,52 +1,42 @@
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 from app.models.project_model import Project
-from app.core.database import SessionLocal
 
-# CREATE
-def create_project(data):
-    db = SessionLocal()
+# ------------------- Create Project -------------------
+async def create_project(db: AsyncSession, data: dict) -> Project:
     new_project = Project(**data)
     db.add(new_project)
-    db.commit()
-    db.refresh(new_project)
-    db.close()
+    await db.commit()
+    await db.refresh(new_project)
     return new_project
 
-# READ (by id)
-def get_project(project_id: int):
-    db = SessionLocal()
-    project = db.query(Project).filter(Project.id == project_id).first()
-    db.close()
+# ------------------- Get Project -------------------
+async def get_project(db: AsyncSession, project_id: str):
+    result = await db.execute(select(Project).where(Project.id == project_id))
+    return result.scalar_one_or_none()
+
+# ------------------- Get All Projects -------------------
+async def get_all_projects(db: AsyncSession):
+    result = await db.execute(select(Project))
+    return result.scalars().all()
+
+# ------------------- Update Project -------------------
+async def update_project(db: AsyncSession, project_id: str, data: dict):
+    project = await get_project(db, project_id)
+    if not project:
+        return None
+    for k, v in data.items():
+        setattr(project, k, v)
+    db.add(project)
+    await db.commit()
+    await db.refresh(project)
     return project
 
-# READ ALL
-def get_all_projects():
-    db = SessionLocal()
-    projects = db.query(Project).all()
-    db.close()
-    return projects
-
-# UPDATE
-def update_project(project_id: int, data: dict):
-    db = SessionLocal()
-    project = db.query(Project).filter(Project.id == project_id).first()
+# ------------------- Delete Project -------------------
+async def delete_project(db: AsyncSession, project_id: str):
+    project = await get_project(db, project_id)
     if not project:
-        db.close()
-        return None
-    for key, value in data.items():
-        setattr(project, key, value)
-    db.commit()
-    db.refresh(project)
-    db.close()
-    return project
-
-# DELETE
-def delete_project(project_id: int):
-    db = SessionLocal()
-    project = db.query(Project).filter(Project.id == project_id).first()
-    if not project:
-        db.close()
-        return None
-    db.delete(project)
-    db.commit()
-    db.close()
+        return False
+    await db.delete(project)
+    await db.commit()
     return True

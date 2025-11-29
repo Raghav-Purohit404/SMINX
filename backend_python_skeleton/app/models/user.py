@@ -8,23 +8,26 @@ class UserBase(BaseModel):
     email: EmailStr = Field(..., description="Unique email address of the user")
     skills: Optional[List[str]] = Field(default_factory=list, description="List of user's skills")
 
+
 # ---------- Create Schema ----------
 class UserCreate(UserBase):
-    password: str = Field(..., min_length=6, description="User's password for authentication")
+    password: str = Field(..., min_length=6, description="User password")
+    
 
 # ---------- Update Schema ----------
 class UserUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=2, max_length=50)
-    skills: Optional[List[str]] = Field(default_factory=list)
+    skills: Optional[List[str]] = None
     password: Optional[str] = Field(None, min_length=6)
 
-# ---------- Database / Output Schema ----------
+
+# ---------- Output Schema (API Response) ----------
 class UserOut(UserBase):
-    id: str = Field(..., alias="_id")
+    id: int = Field(..., description="User ID")
+    email_verified: bool
     created_at: datetime
     updated_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True   # SQLAlchemy compatibility
         allow_population_by_field_name = True
-

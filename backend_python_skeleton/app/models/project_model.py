@@ -11,9 +11,10 @@ class Project(Base):
     description = Column(Text, nullable=True)
     creator_id = Column(Integer, ForeignKey("users.id"))
     skills_required = Column(JSON, nullable=True)
+    status = Column(String(20), default="Open")
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    status = Column(String(20), default="Open")
 
-    # Optional relationship if you have User model
+    # Optional relationship with User model
     creator = relationship("User", back_populates="projects")
+
